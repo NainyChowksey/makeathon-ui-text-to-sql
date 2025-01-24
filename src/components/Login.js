@@ -1,91 +1,185 @@
-import React, { useState, useRef } from 'react'
-import Header from './Header'
-import { checkValidData } from '../utils/validations';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../utils/firebase"
-import { addUser } from '../utils/userSlice';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    setPersistence,
+    browserLocalPersistence,
+    onAuthStateChanged,
+} from 'firebase/auth';
+import { auth } from '../utils/firebase';
 import { useDispatch } from 'react-redux';
-import { BACKGROUND_URL, USER_AVATAR } from '../utils/constants';
+import { addUser } from '../utils/userSlice';
+import { checkValidData } from '../utils/validations';
+import { USER_AVATAR } from '../utils/constants';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+    const [isSignIn, setIsSignIn] = useState(true);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const email = useRef();
+    const name = useRef();
+    const password = useRef();
+    const key = useRef(); // New optional Key field
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const carouselMessages = [
+        '"Convert your queries effortlessly!"',
+        '"Leverage AI for seamless SQL generation!"',
+        '"Say goodbye to manual SQL writing!"',
+    ];
+
+    useEffect(() => {
+        // Automatic carousel slide change
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % carouselMessages.length);
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [carouselMessages.length]);
 
 
-  const [isSignIn, setIsSignIn] = useState(true);
-  const [errorMessage, setErrorMessage] = useState(null);
 
-  const email = useRef()
-  const name = useRef()
-  const password = useRef()
+    const handleButtonClick = () => {
+        const message = checkValidData(email.current.value, password.current.value);
+        setErrorMessage(message);
+        if (message !== null) return;
 
-  const dispatch = useDispatch()
-  const handleSignInToggle = () => {
-    setIsSignIn(!isSignIn)
-  }
-
-
-  const handleButtonClick = () => {
-    const message = checkValidData(email.current.value, password.current.value)
-    setErrorMessage(message);
-    if (message !== null) return
-    if (!isSignIn) {
-      createUserWithEmailAndPassword(auth, email.current.value, password.current.value)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          updateProfile(user, {
-            displayName: name.current.value,
-            photoURL: USER_AVATAR,
-          })
+        setPersistence(auth, browserLocalPersistence)
             .then(() => {
-              const { uid, email, displayName, photoURL } = auth.currentUser;
-              dispatch(
-                addUser({
-                  uid: uid,
-                  email: email,
-                  displayName: displayName,
-                  photoURL: photoURL,
-                })
-              );
+                if (!isSignIn) {
+                    return createUserWithEmailAndPassword(auth, email.current.value, password.current.value).then(
+                        (userCredential) => {
+                            return updateProfile(userCredential.user, {
+                                displayName: name.current.value,
+                                photoURL: USER_AVATAR,
+                            });
+                        }
+                    );
+                } else {
+                    return signInWithEmailAndPassword(auth, email.current.value, password.current.value);
+                }
             })
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          setErrorMessage(errorCode + "-" + errorMessage)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                const userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || 'Anonymous User',
+                    photoURL: user.photoURL || USER_AVATAR,
+                };
+                dispatch(addUser(userData));
+                localStorage.setItem('authUser', JSON.stringify(userData));
+                navigate('/browse');
+            })
+            .catch((error) => {
+                setErrorMessage(error.code + '-' + error.message);
+            });
+    };
 
-        });
-    }
-    else {
-      signInWithEmailAndPassword(auth, email.current.value, password.current.value)
-        .then((userCredential) => {
-          const user = userCredential.user;
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          setErrorMessage(errorCode + "-" + errorMessage)
-        });
-    }
-  }
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+            <div className="rounded-2xl w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 overflow-hidden shadow-xl bg-white">
+                {/* Left Section - Welcome and Carousel */}
+                <div className="p-12 bg-gray-50 flex flex-col items-center justify-center">
+                    <h1 className="text-4xl font-bold mb-6 text-center text-purple-700">Welcome to Just In Time!</h1>
+                    <p className="text-gray-600 text-sm mb-8 text-center">
+                        Experience seamless Text-to-SQL and SQL-to-Text generation with our AI-driven tool.
+                    </p>
+                    <div className="w-full max-w-xs">
+                        {/* Carousel */}
+                        <div className="relative">
+                            {carouselMessages.map((message, index) => (
+                                <div
+                                    key={index}
+                                    className={`absolute inset-0 text-center text-purple-700 font-medium transition-opacity duration-500 ${
+                                        index === currentSlide ? 'opacity-100' : 'opacity-0'
+                                    }`}
+                                >
+                                    {message}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
 
-  return (
-    <div >
-      <Header />
-      <div className=' absolute bg-fuchsia-100 w-screen h-screen object-cover'>
-      
-      
-      <form onSubmit={(e) => e.preventDefault()} className=" w-screen md:w-3/12 absolute p-12 bg-white my-36 mx-auto right-0 left-0 text-black rounded-lg bg-opacity-80">
-        <h1 className='p-2 font-bold text-gray-600 text-3xl mb-4'>{isSignIn ? 'Sign In' : 'Sign Up'}</h1>
-        {!isSignIn && <input ref={name} className="bg-black m-2 p-4 w-full  border-gray-600  border text-black rounded-sm bg-opacity-0" text="Name" type="text" placeholder='Full Name' />}
-        <input ref={email} className="bg-black  border-gray-600  border m-2 p-4 w-full rounded-sm bg-opacity-0" text="Email" type="text" placeholder='Email' />
-        <input ref={password} className="bg-black  border-gray-600 border m-2 p-4 w-full rounded-sm bg-opacity-0" text="Password" type="password" placeholder='Password' />
-        <button onClick={handleButtonClick} className='bg-slate-600 m-2 mt-8 p-2 w-full rounded-md cursor-pointer'>{isSignIn ? 'Sign In' : 'Sign up'}</button>
-        <span className='text-red-600 text-sm text-bold m-2'>{errorMessage}</span>
-        <p className='p-2 text-l text-gray-400 cursor-pointer mb-8' onClick={handleSignInToggle}>{isSignIn ? 'New User?' : 'Already an user?'}<span className='text-white'> {isSignIn ? 'Sign up now.' : 'Sign in now.'}</span></p>
-      </form>
-      </div>
-      
-    </div>
-  )
-}
+                {/* Right Section - Login/Sign-Up Form */}
+                <div className="p-12 bg-white">
+                    <h2 className="text-3xl font-semibold mb-4 text-center text-gray-800">{isSignIn ? 'Sign In' : 'Sign Up'}</h2>
+                    <p className="text-gray-500 text-sm mb-6 text-center">
+                        {isSignIn ? 'Access your account right away' : 'Create a new account in seconds'}
+                    </p>
 
-export default Login
+                    {errorMessage && (
+                        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{errorMessage}</div>
+                    )}
+
+                    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+                        {!isSignIn && (
+                            <>
+                            <div>
+                                <label className="block text-sm text-gray-700 mb-1">Full Name</label>
+                                <input
+                                    ref={name}
+                                    type="text"
+                                    required={!isSignIn}
+                                    placeholder="John Doe"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 text-gray-800"
+                                />
+                            </div>
+                            <div>
+                            <label className="block text-sm text-gray-700 mb-1">Key (Optional)</label>
+                            <input
+                            ref={key}
+                        type="text"
+                        placeholder="Enter your Key (optional)"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 text-gray-800"
+                    />
+                </div>
+                            </>
+                )}
+                        <div>
+                            <label className="block text-sm text-gray-700 mb-1">Email</label>
+                            <input
+                                ref={email}
+                                type="email"
+                                required
+                                placeholder="john@example.com"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 text-gray-800"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-700 mb-1">Password</label>
+                            <input
+                                ref={password}
+                                type="password"
+                                required
+                                placeholder="********"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 text-gray-800"
+                            />
+                        </div>
+                        <button
+                            onClick={handleButtonClick}
+                            className="w-full bg-purple-600 text-white font-medium py-3 rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            {isSignIn ? 'Sign In' : 'Sign Up'}
+                        </button>
+                    </form>
+
+                    <p className="text-center text-sm text-gray-500 mt-4">
+                        {isSignIn ? 'New here? ' : 'Already have an account? '}
+                        <button
+                            onClick={() => setIsSignIn(!isSignIn)}
+                            className="text-purple-600 font-medium hover:underline"
+                        >
+                            {isSignIn ? 'Sign Up' : 'Sign In'}
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Login;
