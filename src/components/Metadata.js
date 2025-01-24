@@ -151,11 +151,10 @@ export default function Metadata() {
                         target: tableName,
                         sourceHandle: `${fk.referred_table}-${fk.referred_columns[0]}`,
                         targetHandle: `${tableName}-${fk.constrained_columns[0]}`,
-                        animated: true,
-                        style: { stroke: "#ff5722", strokeWidth: 2 },
+                        style: { stroke: "#B794F4", strokeWidth: 2 },
                         markerEnd: {
                             type: "arrowclosed",
-                            color: "#ff5722",
+                            color: "#B794F4",
                         },
                     }));
                 });
