@@ -7,9 +7,10 @@ import ReactFlow, {
 } from "reactflow";
 import {FaArrowLeft, FaKey, FaTable} from "react-icons/fa";
 import "reactflow/dist/style.css";
-import { useNavigate } from "react-router-dom"; // For navigation
+import { useNavigate } from "react-router-dom";
+import TableNode from "./TableNode"; // For navigation
 
-const TableNode = ({ data }) => {
+const TableNode1 = ({ data }) => {
     const columnNameWidth = 150;
     const columnTypeWidth = 120;
     const nullableWidth = 80;
@@ -124,11 +125,15 @@ export default function Metadata() {
                 const processedNodes = data.map((tableObj, index) => {
                     const tableName = Object.keys(tableObj)[0];
                     const table = tableObj[tableName];
+                    const columnCount = table.columns.length;
 
                     return {
                         id: tableName,
-                        type: "table",
-                        position: { x: index * 450, y: index * 200 },
+                        type: 'table',
+                        position: {
+                            x: index % 3 * 550, // Arrange in 3 columns
+                            y: Math.floor(index / 3) * (columnCount * 60 + 100), // Adjust y-position based on column count
+                        },
                         data: {
                             label: tableName,
                             columns: table.columns,
@@ -136,7 +141,6 @@ export default function Metadata() {
                         },
                     };
                 });
-
                 const processedEdges = data.flatMap((tableObj) => {
                     const tableName = Object.keys(tableObj)[0];
                     const table = tableObj[tableName];

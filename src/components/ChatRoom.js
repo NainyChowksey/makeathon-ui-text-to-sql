@@ -4,29 +4,33 @@ import {useDispatch, useSelector} from 'react-redux';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { format } from "sql-formatter";
 import { dracula as style } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import {addToChatHistory} from "../utils/chatSlice";
+import {addToChatHistory, setCurrentActiveChatId, updateChatHistory} from "../utils/chatSlice";
 
 export default function ChatRoom({newChat, setNewChat}) {
 
   const dispatch = useDispatch()
 
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([]);
   const [copyStatus, setCopyStatus] = useState(null); // For copy button feedback
   const messagesEndRef = useRef(null);
 
   const chatHistory = useSelector((state) => state.chat.chatHistory);
 
+  const currentActiveChatId = useSelector((state) => state.chat.currentActiveChatId);
+
+  // Find messages for the currently active chat
+  const activeChat = chatHistory.find((chat) => chat.id === currentActiveChatId);
+  const messages = activeChat?.messages || [];
+
+
   const { displayName } = useSelector((state) => state.user);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    console.log(messages);
-  }, [messages]);
+  }, [activeChat]);
 
   useEffect(() => {
     if (newChat) {
-      setMessages([]);
       setNewChat(false);
     }
   }, [newChat])
@@ -89,7 +93,7 @@ export default function ChatRoom({newChat, setNewChat}) {
     for (const message of newMessages) {
       await new Promise((resolve) =>
           setTimeout(() => {
-            setMessages((oldMessages) => [...oldMessages, message]);
+            dispatch(updateChatHistory(message))
             resolve();
           }, 500) // Adjust delay as needed
       );
@@ -100,13 +104,12 @@ export default function ChatRoom({newChat, setNewChat}) {
     if (input.trim()) {
 
       if (messages.length === 0) {
-        const newChatTitle = input.length > 20 ? `${input.substring(0, 20)}...` : input;
-        const newChat = { id: chatHistory.length + 1, title: newChatTitle, timestamp: Date.now() }; // Create a unique ID
+        const newChat = { id: chatHistory.length + 1, messages: [], timestamp: Date.now() }; // Create a unique ID
         dispatch(addToChatHistory(newChat));
+        dispatch(setCurrentActiveChatId(newChat.id));
       }
 
-
-      setMessages([...messages, { text: input, sender: 'user' }]);
+      dispatch(updateChatHistory( { text: input, sender: 'user' }))
 
       const { botText, botSQL } = generateBotResponse(input);
 
@@ -122,9 +125,10 @@ export default function ChatRoom({newChat, setNewChat}) {
 
   const handleCommonQuestionClick = async (question) => {
 
+    const newChat = { id: chatHistory.length + 1, messages: [{ text: question, sender: 'user' }], timestamp: Date.now() }; // Create a unique ID
+    dispatch(addToChatHistory(newChat));
+    dispatch(setCurrentActiveChatId(newChat.id));
 
-
-    setMessages([...messages, { text: question, sender: 'user' }]);
 
     const { botText, botSQL } = generateBotResponse(question);
 
