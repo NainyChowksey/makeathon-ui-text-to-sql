@@ -4,9 +4,10 @@ import {useDispatch, useSelector} from 'react-redux';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { format } from "sql-formatter";
 import { dracula as style } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import {addToChatHistory, setCurrentActiveChatId, updateChatHistory} from "../utils/chatSlice";
+import {addToChatHistory, setBookmarks, setCurrentActiveChatId, updateChatHistory} from "../utils/chatSlice";
 
 const BookmarkButton = ({ question, answer }) => {
+  const dispatch = useDispatch();
   const [isBookmarked, setIsBookmarked] = useState(false); // State to toggle icon
   const [temporary, setTemporary] = useState(false); // State for interaction animation
   const currentActiveChatId = useSelector((state) => state.chat.currentActiveChatId);
@@ -23,7 +24,7 @@ const BookmarkButton = ({ question, answer }) => {
     if (question && answer) {
       console.log("Bookmarked Question:", question);
       console.log("Bookmarked Answer:", answer);
-      // saveBookmark({ question, answer }); // Save the bookmark
+      dispatch(setBookmarks({ question, answer })); // Save the bookmark
     }
 
     // After 1 second, switch to the bookmarked state
@@ -300,6 +301,15 @@ fetch(url, {
   };
   const characterLimit = 1000; // Define character limit for the input box
 
+  const getPreviousUserQuestion = (messages, currentIndex) => {
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (messages[i]?.sender === 'user') {
+        return messages[i].text; // Return the text of the user's message
+      }
+    }
+    return null; // If no user message is found
+  };
+
   return (
       <div className="h-screen bg-gray-100 flex flex-col">
         {messages.length === 0 ? (
@@ -369,14 +379,12 @@ fetch(url, {
                           }`}
                       >
                         {/* Bookmark Icon */}
-                        {msg.sender === "bot" && !msg.sql &&(
+                        {msg.sender === "bot" && !msg.sql && (
                             <BookmarkButton
-                                question={messages[index - 1]?.text} // Assume previous message is the question
+                                question={getPreviousUserQuestion(messages, index)} // Dynamically find the right question
                                 answer={msg.text} // Current bot message is the answer
                             />
-
                         )}
-
                         {msg.sql ? (
                             <div className="relative">
                               <SyntaxHighlighter

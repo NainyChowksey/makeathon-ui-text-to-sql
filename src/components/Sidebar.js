@@ -1,47 +1,27 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { FaChevronLeft, FaChevronRight, FaPlus, FaSignOutAlt } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaPlus, FaSignOutAlt, FaBookmark } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import { removeUser } from "../utils/userSlice";
-import { addToChatHistory, setCurrentActiveChatId } from "../utils/chatSlice";
-
-const getLabelForChat = (timestamp) => {
-    const chatDate = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-    const isToday = chatDate.toDateString() === today.toDateString();
-    const isYesterday = chatDate.toDateString() === yesterday.toDateString();
-
-    if (isToday) return "Today";
-    if (isYesterday) return "Yesterday";
-    return chatDate.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-};
+import { addToChatHistory, setCurrentActiveChatId, setActiveBookmarkId } from "../utils/chatSlice";
 
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const user = useSelector((state) => state.user);
-    const { currentActiveChatId, chatHistory } = useSelector((state) => state.chat);
+    const { currentActiveChatId, chatHistory, bookmarks } = useSelector((state) => state.chat); // Fetch bookmarks as well
     const role = useSelector((state) => state.userConfig.role);
 
     const location = useLocation();
-
     const [searchTerm, setSearchTerm] = useState("");
 
-    // Filtered chats based on the search term
     const filteredChats = chatHistory.filter((chat) =>
         chat.messages[0]?.text.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Group chats by day (Today, Yesterday, or specific dates)
     const groupedChats = filteredChats.reduce((acc, chat) => {
-        const label = getLabelForChat(chat.timestamp);
+        const label = (chat.timestamp);
         if (!acc[label]) acc[label] = [];
         acc[label].push(chat);
         return acc;
@@ -58,6 +38,10 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
 
     const handleChatClick = (chat) => {
         dispatch(setCurrentActiveChatId(chat.id));
+    };
+
+    const handleBookmarkClick = (bookmark, id) => {
+        dispatch(setActiveBookmarkId(id)); // Dispatch the active bookmark ID
     };
 
     const handleSignOut = () => {
@@ -84,7 +68,6 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
         >
             {/* Sidebar Header Section */}
             <div>
-                {/* Sidebar Toggle Button */}
                 <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                     className="text-purple-300 mb-4 bg-gray-800 rounded-full p-2 hover:bg-gray-700 shadow-md transition"
@@ -92,7 +75,6 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
                     {isSidebarOpen ? <FaChevronLeft /> : <FaChevronRight />}
                 </button>
 
-                {/* New Chat Button */}
                 <button
                     onClick={handleNewChat}
                     className="w-full flex items-center justify-center bg-purple-600 hover:bg-purple-500 transition text-white font-semibold rounded-lg py-2 mb-6"
@@ -101,7 +83,6 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
                     {isSidebarOpen && "New Chat"}
                 </button>
 
-                {/* Title Section */}
                 {isSidebarOpen && (
                     <h1 className="text-lg font-bold text-center mb-6">
                         Just in Time <br />
@@ -127,7 +108,6 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
             {isSidebarOpen && (
                 <div className="flex-grow overflow-y-auto">
                     <div className="text-gray-400 text-sm font-semibold mb-2">Previous Chats</div>
-
                     {Object.keys(groupedChats).map((label) => (
                         <div key={label} className="mb-2">
                             {groupedChats[label].map((chat) => (
@@ -141,19 +121,41 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
                                     }`}
                                 >
                                     <span className="truncate">
-  {chat.messages[0]?.text.length > 20
-      ? `${chat.messages[0]?.text.slice(0, 20)}...` // Add "..." if it exceeds 20 chars
-      : chat.messages[0]?.text || `Chat ${chat.id}`} {/* Fallback if no message */}
-</span></div>
+                                        {chat.messages[0]?.text.length > 20
+                                            ? `${chat.messages[0]?.text.slice(0, 20)}...`
+                                            : chat.messages[0]?.text || `Chat ${chat.id}`}
+                                    </span>
+                                </div>
                             ))}
                         </div>
                     ))}
+
+                    {/* Bookmarked Questions Section */}
+                    <div className="text-gray-400 text-sm font-semibold mt-6 mb-2">Bookmarked Questions</div>
+                    <div className="mb-2">
+                        {bookmarks.map((bookmark, index) => (
+                            <div
+                                key={index}
+                                onClick={() => handleBookmarkClick(bookmark, index)} // Use index as unique ID for now
+                                className={`cursor-pointer p-3 rounded-lg mb-2 transition flex items-center ${
+                                    // Add Bookmark CSS styles here
+                                    "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                                }`}
+                            >
+                                <FaBookmark className="text-yellow-500 mr-2" />
+                                <span className="truncate">
+                                    {bookmark.question.length > 20
+                                        ? `${bookmark.question.slice(0, 20)}...`
+                                        : bookmark.question}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
             {/* Sidebar Footer Section */}
             <div>
-                {/* User Profile Section */}
                 {isSidebarOpen && user && (
                     <div className="bg-gray-800 rounded-lg p-3 shadow-md mb-4 flex items-center hover:bg-gray-700 transition">
                         <div className="w-12 h-12 rounded-full border border-purple-500 overflow-hidden bg-gray-700 mr-3 flex-shrink-0">
@@ -171,17 +173,13 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
                     </div>
                 )}
 
-                {/* Metadata Page Button */}
-                {isSidebarOpen && (
-                    <button
-                        onClick={navigateToMetadata}
-                        className="w-full bg-gray-800 hover:bg-gray-700 transition text-purple-300 font-semibold rounded-lg py-2 mb-2"
-                    >
-                        Metadata Page
-                    </button>
-                )}
+                <button
+                    onClick={navigateToMetadata}
+                    className="w-full bg-gray-800 hover:bg-gray-700 transition text-purple-300 font-semibold rounded-lg py-2 mb-2"
+                >
+                    Metadata Page
+                </button>
 
-                {/* Sign Out Button */}
                 <button
                     onClick={handleSignOut}
                     className="w-full flex items-center justify-center bg-purple-600 hover:bg-purple-700 transition text-white font-semibold rounded-lg py-2"
