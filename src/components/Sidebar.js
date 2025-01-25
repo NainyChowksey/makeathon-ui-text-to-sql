@@ -77,10 +77,12 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
 
     const handleChatClick = (chat) => {
         dispatch(setCurrentActiveChatId(chat.id));
+        dispatch(setActiveBookmarkId(null));
     };
 
     const handleBookmarkClick = (bookmark, id) => {
         dispatch(setActiveBookmarkId(id)); // Dispatch the active bookmark ID
+        dispatch(setCurrentActiveChatId(null))
     };
 
     const handleSignOut = () => {
