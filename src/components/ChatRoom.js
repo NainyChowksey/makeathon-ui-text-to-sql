@@ -11,28 +11,62 @@ const BookmarkButton = ({ question, answer }) => {
   const [isBookmarked, setIsBookmarked] = useState(false); // State to toggle icon
   const [temporary, setTemporary] = useState(false); // State for interaction animation
   const currentActiveChatId = useSelector((state) => state.chat.currentActiveChatId);
+  const userState =useSelector((state) => state.user);
   useEffect(() => {
     setIsBookmarked(false)
+    setTemporary(false);
   }, [currentActiveChatId])
   const handleBookmarkClick = () => {
+    console.log(isBookmarked)
     if (isBookmarked) return; // Do nothing if already bookmarked
 
     // Trigger the temporary icon change
-    setTemporary(true);
+    setIsBookmarked(true);
 
     // Bookmark the question and answer
     if (question && answer) {
+
+      const url =
+                "https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/store-data";
+                // "http://localhost:8000/metadata"
+            const data = {
+                uid: userState.uid,
+                question:question,
+                answer:answer
+            };
+
+            const jsonData = JSON.stringify(data);
+
+            const headers = new Headers();
+            headers.append("Content-Type", "application/json");
+
+            fetch(url, {
+                method: "POST",
+                headers: headers,
+                body: jsonData,
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((responseData) => {
+                    console.log("Nainy", responseData);
+                    dispatch(setBookmarks({ question, answer }));}
+                  )
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+        }
+
       console.log("Bookmarked Question:", question);
       console.log("Bookmarked Answer:", answer);
-      dispatch(setBookmarks({ question, answer })); // Save the bookmark
+       // Save the bookmark
     }
 
     // After 1 second, switch to the bookmarked state
-    setTimeout(() => {
-      setTemporary(false);
-      setIsBookmarked(true);
-    }, 1000);
-  };
+  
 
   return (
       <button
@@ -44,8 +78,6 @@ const BookmarkButton = ({ question, answer }) => {
       >
         {isBookmarked ? (
             <FaStar className="text-yellow-500" /> // Filled star if bookmarked
-        ) : temporary ? (
-            <FaStar className="text-yellow-300" /> // Temporary active state
         ) : (
             <FaRegStar /> // Outlined star by default
         )}
@@ -251,7 +283,7 @@ fetch(url, {
     const data = {
       "uid": uid,
       "chatbot": [["Hi", "How are you?"]],
-      "message": input
+      "message": question
     }
 
     const jsonData = JSON.stringify(data);
