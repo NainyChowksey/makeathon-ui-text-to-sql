@@ -690,7 +690,7 @@ export default function Metadata() {
                         target: tableName,
                         sourceHandle: `${fk.referred_table}-${fk.referred_columns[0]}`,
                         targetHandle: `${tableName}-${fk.constrained_columns[0]}`,
-                        style: { stroke: "#B794F4", strokeWidth: 2 },
+                        style: { stroke: "#B794F4", strokeWidth: 5 },
                         markerEnd: {
                             type: "arrowclosed",
                             color: "#B794F4",

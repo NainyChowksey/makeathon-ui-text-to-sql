@@ -65,6 +65,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
     const handleSignOut = () => {
         localStorage.removeItem("authUser");
         dispatch(removeUser());
+        dispatch(setCurrentActiveChatId(null));
+
         navigate("/");
     };
 
