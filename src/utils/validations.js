@@ -30,5 +30,5 @@ export function convertResponses(inputData) {
             timestamp: sevenDaysAgo,
             messages: messages
         };
-    }).sort((a, b) => a.timestamp - b.timestamp);
+    })
 }

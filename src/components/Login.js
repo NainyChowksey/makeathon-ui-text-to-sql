@@ -36,6 +36,7 @@ const Login = () => {
     '"Say goodbye to manual SQL writing!"',
   ];
 
+
   useEffect(() => {
     // Automatic carousel slide change
     const interval = setInterval(() => {

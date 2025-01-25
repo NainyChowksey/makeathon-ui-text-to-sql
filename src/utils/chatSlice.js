@@ -100,7 +100,7 @@ const chatSlice = createSlice({
         // Add a new chat and sort by most recent
         addToChatHistory: (state, action) => {
             state.chatHistory.push(action.payload);
-            state.chatHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            state.chatHistory.sort((a, b) => b.id - a.id);
         },
 
        // Set the chat to be active based on chat object
