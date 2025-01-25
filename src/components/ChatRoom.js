@@ -11,28 +11,62 @@ const BookmarkButton = ({ question, answer }) => {
   const [isBookmarked, setIsBookmarked] = useState(false); // State to toggle icon
   const [temporary, setTemporary] = useState(false); // State for interaction animation
   const currentActiveChatId = useSelector((state) => state.chat.currentActiveChatId);
+  const userState =useSelector((state) => state.user);
   useEffect(() => {
     setIsBookmarked(false)
+    setTemporary(false);
   }, [currentActiveChatId])
   const handleBookmarkClick = () => {
+    console.log(isBookmarked)
     if (isBookmarked) return; // Do nothing if already bookmarked
 
     // Trigger the temporary icon change
-    setTemporary(true);
+    setIsBookmarked(true);
 
     // Bookmark the question and answer
     if (question && answer) {
+
+      const url =
+                "https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/store-data";
+                // "http://localhost:8000/metadata"
+            const data = {
+                uid: userState.uid,
+                question:question,
+                answer:answer
+            };
+
+            const jsonData = JSON.stringify(data);
+
+            const headers = new Headers();
+            headers.append("Content-Type", "application/json");
+
+            fetch(url, {
+                method: "POST",
+                headers: headers,
+                body: jsonData,
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((responseData) => {
+                    console.log("Nainy", responseData);
+                    dispatch(setBookmarks({ question, answer }));}
+                  )
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+        }
+
       console.log("Bookmarked Question:", question);
       console.log("Bookmarked Answer:", answer);
-      dispatch(setBookmarks({ question, answer })); // Save the bookmark
+       // Save the bookmark
     }
 
     // After 1 second, switch to the bookmarked state
-    setTimeout(() => {
-      setTemporary(false);
-      setIsBookmarked(true);
-    }, 1000);
-  };
+  
 
   return (
       <button
@@ -44,8 +78,6 @@ const BookmarkButton = ({ question, answer }) => {
       >
         {isBookmarked ? (
             <FaStar className="text-yellow-500" /> // Filled star if bookmarked
-        ) : temporary ? (
-            <FaStar className="text-yellow-300" /> // Temporary active state
         ) : (
             <FaRegStar /> // Outlined star by default
         )}
@@ -62,7 +94,7 @@ export default function ChatRoom({newChat, setNewChat}) {
   const messagesEndRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const chatHistory = useSelector((state) => state.chat.chatHistory);
-
+  const currentBookmarkId = useSelector(state => state.chat.activeBookmarkId);
 
   const currentActiveChatId = useSelector((state) => state.chat.currentActiveChatId);
 
@@ -73,7 +105,11 @@ export default function ChatRoom({newChat, setNewChat}) {
 
   const { displayName, uid } = useSelector((state) => state.user);
 
+  const activeBookmarkId = useSelector((state) => state.chat.activeBookmarkId); // Get activeBookmarkId
+  const bookmarks = useSelector((state) => state.chat.bookmarks); // Get all bookmarks
+  const activeBookmark = activeBookmarkId !== null ? bookmarks[activeBookmarkId] : null; // Fetch the active bookmark
 
+  console.log(activeBookmark, bookmarks, activeBookmarkId, "NAINY")
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeChat]);
@@ -161,12 +197,22 @@ export default function ChatRoom({newChat, setNewChat}) {
     console.log(botText, botSQL, "NAINY")
 
     const isSql = !botSQL?.includes("N/A")
-  
+  if(!isSql){
+    await addMessageWithDelay([
+      { text: botText, sender: 'bot' }
+    ]);
+
+  }
+  else{
     await addMessageWithDelay([
       { text: botText, sender: 'bot' },
-        ...isSql && ({ text: botSQL, sender: 'bot', sql: isSql }),
+      { text: botSQL, sender: 'bot', sql: isSql },
+    
     ]);
+
+  }
   };
+  
 
   const handleSubmit = async () => {
     if (input.trim()) {
@@ -241,7 +287,7 @@ fetch(url, {
     const data = {
       "uid": uid,
       "chatbot": [["Hi", "How are you?"]],
-      "message": input
+      "message": question
     }
 
     const jsonData = JSON.stringify(data);
@@ -314,53 +360,68 @@ fetch(url, {
       <div className="h-screen bg-gray-100 flex flex-col">
         {messages.length === 0 ? (
             // Welcome Screen
-            <div className="flex-grow flex justify-center items-center p-6">
-              <div className="w-full max-w-4xl">
-                <h1 className="text-5xl font-extrabold text-gray-900">
-                  Hi there,{' '}
-                  <span className="bg-gradient-to-r from-purple-500 to-purple-700 bg-clip-text text-transparent">
+          activeBookmark ? <div className="flex-grow flex justify-center items-center p-6">
+                <div className="w-full max-w-4xl">
+                  <h1 className="text-2xl font-bold text-gray-800 mb-4">
+                    Bookmarked Question:
+                  </h1>
+                  <p className="bg-purple-100 text-purple-800 rounded-lg p-4 mb-4 shadow">
+                    {activeBookmark.question}
+                  </p>
+
+                  <h1 className="text-2xl font-bold text-gray-800 mb-4">Answer:</h1>
+                  <p className="bg-gray-100 text-gray-700 rounded-lg p-4 shadow">
+                    {activeBookmark.answer}
+                  </p>
+                </div>
+              </div>
+              :   <div className="flex-grow flex justify-center items-center p-6">
+            <div className="w-full max-w-4xl">
+              <h1 className="text-5xl font-extrabold text-gray-900">
+                Hi there,{' '}
+                <span className="bg-gradient-to-r from-purple-500 to-purple-700 bg-clip-text text-transparent">
                 {displayName || 'Guest'}
               </span>
-                </h1>
-                <h2 className="text-xl font-medium text-gray-700 mt-4">
-                  How can I assist you with text-to-SQL conversion today? Start by picking a prompt
-                  below or type your own query.
-                </h2>
+              </h1>
+              <h2 className="text-xl font-medium text-gray-700 mt-4">
+                How can I assist you with text-to-SQL conversion today? Start by picking a prompt
+                below or type your own query.
+              </h2>
 
-                {/* Common Questions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  {commonQuestions.map((question, index) => (
-                      <button
-                          key={index}
-                          className="py-4 px-6 bg-purple-100 border border-purple-300 rounded-lg text-purple-800 text-sm md:text-base font-medium shadow hover:shadow-lg transition-all"
-                          onClick={() => handleCommonQuestionClick(question)}
-                      >
-                        {question}
-                      </button>
-                  ))}
-                </div>
-
-                {/* Input Field */}
-                <div className="relative w-full max-w-4xl mt-6">
-                  <div className="bg-white shadow-md border rounded-full p-4 flex items-center">
-                    <input
-                        type="text"
-                        placeholder="Ask anything about SQL or databases..."
-                        className="flex-grow border-none outline-none text-gray-700 placeholder-gray-500"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                    />
+              {/* Common Questions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                {commonQuestions.map((question, index) => (
                     <button
-                        onClick={handleSubmit}
-                        className="ml-4 bg-purple-500 text-white rounded-full p-3 hover:bg-purple-600 transition"
+                        key={index}
+                        className="py-4 px-6 bg-purple-100 border border-purple-300 rounded-lg text-purple-800 text-sm md:text-base font-medium shadow hover:shadow-lg transition-all"
+                        onClick={() => handleCommonQuestionClick(question)}
                     >
-                      <FaArrowRight />
+                      {question}
                     </button>
-                  </div>
+                ))}
+              </div>
+
+              {/* Input Field */}
+              <div className="relative w-full max-w-4xl mt-6">
+                <div className="bg-white shadow-md border rounded-full p-4 flex items-center">
+                  <input
+                      type="text"
+                      placeholder="Ask anything about SQL or databases..."
+                      className="flex-grow border-none outline-none text-gray-700 placeholder-gray-500"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                  />
+                  <button
+                      onClick={handleSubmit}
+                      className="ml-4 bg-purple-500 text-white rounded-full p-3 hover:bg-purple-600 transition"
+                  >
+                    <FaArrowRight />
+                  </button>
                 </div>
               </div>
             </div>
+          </div>
         ) : (
             // Chat Interface
             <div className="flex flex-col p-6 pb-0 bg-white h-full">
@@ -433,38 +494,38 @@ fetch(url, {
 
 
               {/* Sticky Input */}
-                <div className="p-4 -mx-6 bg-gray-50 border-t border-gray-300 sticky bottom-0 shadow-md">
-                        <div className="flex items-center bg-white border rounded-full p-2 w-full  shadow-md">
-                            <input
-                                type="text"
-                                placeholder="Write your query..."
-                                className="flex-grow px-4 py-2 rounded-full border-none outline-none text-gray-800 placeholder-gray-500"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                                maxLength={characterLimit}
-                            />
-                            <button
-                                onClick={handleSubmit}
-                                className="ml-3 bg-purple-500 text-white rounded-full px-4 py-2 hover:bg-purple-600 transition"
-                            >
-                                <FaArrowRight />
-                            </button>
-                        </div>
+              {!activeBookmark && <div className="p-4 -mx-6 bg-gray-50 border-t border-gray-300 sticky bottom-0 shadow-md">
+                <div className="flex items-center bg-white border rounded-full p-2 w-full  shadow-md">
+                  <input
+                      type="text"
+                      placeholder="Write your query..."
+                      className="flex-grow px-4 py-2 rounded-full border-none outline-none text-gray-800 placeholder-gray-500"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                      maxLength={characterLimit}
+                  />
+                  <button
+                      onClick={handleSubmit}
+                      className="ml-3 bg-purple-500 text-white rounded-full px-4 py-2 hover:bg-purple-600 transition"
+                  >
+                    <FaArrowRight />
+                  </button>
+                </div>
 
-                        {/* Character Count */}
-                        <div
-                            className={`text-sm mt-2 float-end ${
-                                input.length > characterLimit * 0.8
-                                    ? 'text-red-500'
-                                    : input.length > characterLimit * 0.6
-                                        ? 'text-orange-400'
-                                        : 'text-gray-500'
-                            }`}
-                        >
-                            {input.length}/{characterLimit} characters
-                        </div>
-                    </div>
+                {/* Character Count */}
+                <div
+                    className={`text-sm mt-2 float-end ${
+                        input.length > characterLimit * 0.8
+                            ? 'text-red-500'
+                            : input.length > characterLimit * 0.6
+                                ? 'text-orange-400'
+                                : 'text-gray-500'
+                    }`}
+                >
+                  {input.length}/{characterLimit} characters
+                </div>
+              </div>}
             </div>
 
                 )}

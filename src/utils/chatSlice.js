@@ -132,10 +132,13 @@ const chatSlice = createSlice({
         },
         setBookmarks: (state, action) => {
             state.bookmarks.push(action.payload);
+        },
+        initBookmarks: (state, action) => {
+            state.bookmarks=action.payload;
         }
     },
 });
 
-export const {setBookmarks, setActiveBookmarkId, setChatHistory, updateChatHistory, addToChatHistory, setCurrentChat, setCurrentActiveChatId } = chatSlice.actions;
+export const {setBookmarks, setActiveBookmarkId, setChatHistory, updateChatHistory, addToChatHistory, setCurrentChat, setCurrentActiveChatId, initBookmarks } = chatSlice.actions;
 
 export default chatSlice.reducer;

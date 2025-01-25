@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaChevronLeft, FaChevronRight, FaPlus, FaSignOutAlt, FaBookmark } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import { removeUser } from "../utils/userSlice";
-import { addToChatHistory, setCurrentActiveChatId, setActiveBookmarkId } from "../utils/chatSlice";
+import { addToChatHistory, setCurrentActiveChatId, setActiveBookmarkId, setBookmarks, initBookmarks } from "../utils/chatSlice";
 
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
     const navigate = useNavigate();
@@ -12,13 +12,52 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
     const user = useSelector((state) => state.user);
     const { currentActiveChatId, chatHistory, bookmarks } = useSelector((state) => state.chat); // Fetch bookmarks as well
     const role = useSelector((state) => state.userConfig.role);
-
+    
     const location = useLocation();
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredChats = chatHistory.filter((chat) =>
         chat.messages[0]?.text.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    useEffect(() => {
+
+        if (user?.uid) {
+
+            const url =
+                "https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/get-bookmarked";
+                // "http://localhost:8000/metadata"
+            const data = {
+                uid: user.uid,
+            };
+
+            const jsonData = JSON.stringify(data);
+
+            const headers = new Headers();
+            headers.append("Content-Type", "application/json");
+
+            fetch(url, {
+                method: "POST",
+                headers: headers,
+                body: jsonData,
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((responseData) => {
+                   
+                    dispatch(initBookmarks(responseData?.question_answer_pairs))
+
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
+        }
+    }, [user?.uid])
+
 
     const groupedChats = filteredChats.reduce((acc, chat) => {
         const label = (chat.timestamp);
@@ -38,10 +77,12 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
 
     const handleChatClick = (chat) => {
         dispatch(setCurrentActiveChatId(chat.id));
+        dispatch(setActiveBookmarkId(null));
     };
 
     const handleBookmarkClick = (bookmark, id) => {
         dispatch(setActiveBookmarkId(id)); // Dispatch the active bookmark ID
+        dispatch(setCurrentActiveChatId(null))
     };
 
     const handleSignOut = () => {
