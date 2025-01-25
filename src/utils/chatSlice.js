@@ -3,6 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const chatSlice = createSlice({
     name: "chatSlice",
     initialState: {
+        activeBookmarkId: null,
+        bookmarks: [],
         chatHistory:[
             {
                 id: 1,
@@ -124,10 +126,16 @@ const chatSlice = createSlice({
 
         setChatHistory: (state, action) => {
             state.chatHistory = action.payload;
+        },
+        setActiveBookmarkId: (state, action) => {
+            state.activeBookmarkId = action.payload;
+        },
+        setBookmarks: (state, action) => {
+            state.bookmarks.push(action.payload);
         }
     },
 });
 
-export const {setChatHistory, updateChatHistory, addToChatHistory, setCurrentChat, setCurrentActiveChatId } = chatSlice.actions;
+export const {setBookmarks, setActiveBookmarkId, setChatHistory, updateChatHistory, addToChatHistory, setCurrentChat, setCurrentActiveChatId } = chatSlice.actions;
 
 export default chatSlice.reducer;
