@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* WebKit-based browsers (Chrome, Edge, Safari) */
+
+/* WebKit-based browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 12px; /* Set scrollbar width */
+}
+
+::-webkit-scrollbar-track {
+    background: #f3e8ff; /* Light purple track */
+    border-radius: 10px; /* Rounded edges for the track */
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); /* Light shadow inside track */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #a855f7; /* Purple scrollbar thumb */
+    border-radius: 10px; /* Fully rounded edges for the thumb */
+    border: 2px solid #f3e8ff; /* Creates spacing around the thumb */
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); /* Shadow on the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9333ea; /* Darker purple when the thumb is hovered */
+    border-radius: 10px; /* Keeps thumb fully rounded during hover */
+}
+
+/* Firefox-specific styling */
+* {
+    scrollbar-width: thin; /* Makes scrollbar thinner */
+    scrollbar-color: #a855f7 #f3e8ff; /* Thumb color (purple) and track color (light purple) */
+}
+
+/* For a more customized appearance in Firefox */
+.scrollable-container {
+    scrollbar-color: #a855f7 transparent; /* Purple thumb with transparent track */
+    scrollbar-width: thin; /* Thin scrollbar for better appearance */
+    scroll-behavior: smooth; /* Smooth scrolling experience */
+}

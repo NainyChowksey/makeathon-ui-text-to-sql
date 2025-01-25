@@ -1,0 +1,78 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Build output
+/build
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+/coverage
+*.lcov
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Miscellaneous
+.DS_Store
+*.pem
+*.crt
+*.key
+
+# Editor directories and files
+.idea/
+.vscode/
+*.sw?
+*~
+
+# MacOS
+.DS_Store
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Optional npm cache (not needed for CI)
+/.npm
+
+# Optional eslint cache
+/.eslintcache
+
+# Optional babel cache
+/.babelcache
+
+# Possible backup builds
+*.bak
+
+# React Native
+*.expo
+.expo-shared
+
+# Ignore production build files
+/build
+
+# Next.js (if relevant for React)
+.next
+out
+
+# Ignore debugging or profiling tools
+*.log
+*.tgz
+.cache
+*.pid
+
+# Ignore Parcel files (if using Parcel bundler)
+.cache/
+.parcel-cache/

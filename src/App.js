@@ -11,7 +11,7 @@ function App() {
     <Provider store={appStore}>
       <Body/>
     </Provider>
-    
+
   );
 }
 
