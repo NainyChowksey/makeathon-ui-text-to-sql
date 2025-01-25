@@ -110,16 +110,18 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
             {/* Chat History Section */}
             {
                 isSidebarOpen && <div className="flex-grow overflow-y-auto">
+                    <div className="text-gray-400 text-sm font-semibold mb-2">Previous Chats</div>
+
                     {Object.keys(groupedChats).map((label) => (
-                        <div key={label} className="mb-6">
+                        <div key={label} className="mb-2">
                             {/* Relative Date Label (Today, Yesterday, or Date) */}
-                            <div className="text-gray-400 text-sm font-semibold mb-2">{label}</div>
+                            {/*<div className="text-gray-400 text-sm font-semibold mb-2">{label}</div>*/}
                             {/* Chats of the Day */}
                             {groupedChats[label].map((chat) => (
                                 <div
                                     key={chat.id}
                                     onClick={() => handleChatClick(chat)}
-                                    className={`cursor-pointer p-3 rounded-lg mb-2 transition flex items-center ${
+                                    className={`cursor-pointer p-3  rounded-lg mb-2 transition flex items-center ${
                                         currentActiveChatId === chat.id
                                             ? "border-2 border-purple-500 text-white bg-gray-800 font-semibold shadow-lg"
                                             : "bg-gray-800 hover:bg-gray-700 text-gray-300"

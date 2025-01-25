@@ -117,7 +117,7 @@ export default function ChatRoom({newChat, setNewChat}) {
   
     await addMessageWithDelay([
       { text: botText, sender: 'bot' },
-      { text: botSQL, sender: 'bot', sql: isSql },
+        ...isSql && ({ text: botSQL, sender: 'bot', sql: isSql }),
     ]);
   };
 
