@@ -1,10 +1,56 @@
 import {useEffect, useRef, useState} from 'react';
-import {FaArrowRight, FaRobot, FaClipboard, FaCheck} from 'react-icons/fa';
+import {FaArrowRight, FaRobot, FaClipboard, FaCheck, FaBookmark, FaStar, FaRegStar} from 'react-icons/fa';
 import {useDispatch, useSelector} from 'react-redux';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { format } from "sql-formatter";
 import { dracula as style } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {addToChatHistory, setCurrentActiveChatId, updateChatHistory} from "../utils/chatSlice";
+
+const BookmarkButton = ({ question, answer }) => {
+  const [isBookmarked, setIsBookmarked] = useState(false); // State to toggle icon
+  const [temporary, setTemporary] = useState(false); // State for interaction animation
+  const currentActiveChatId = useSelector((state) => state.chat.currentActiveChatId);
+  useEffect(() => {
+    setIsBookmarked(false)
+  }, [currentActiveChatId])
+  const handleBookmarkClick = () => {
+    if (isBookmarked) return; // Do nothing if already bookmarked
+
+    // Trigger the temporary icon change
+    setTemporary(true);
+
+    // Bookmark the question and answer
+    if (question && answer) {
+      console.log("Bookmarked Question:", question);
+      console.log("Bookmarked Answer:", answer);
+      // saveBookmark({ question, answer }); // Save the bookmark
+    }
+
+    // After 1 second, switch to the bookmarked state
+    setTimeout(() => {
+      setTemporary(false);
+      setIsBookmarked(true);
+    }, 1000);
+  };
+
+  return (
+      <button
+          onClick={handleBookmarkClick}
+          className={`absolute -right-8 text-gray-400 hover:text-yellow-500 transition duration-200 ${
+              temporary && "animate-bounce" // Animation during interaction
+          }`}
+          title={isBookmarked ? "Bookmarked!" : "Bookmark this conversation"}
+      >
+        {isBookmarked ? (
+            <FaStar className="text-yellow-500" /> // Filled star if bookmarked
+        ) : temporary ? (
+            <FaStar className="text-yellow-300" /> // Temporary active state
+        ) : (
+            <FaRegStar /> // Outlined star by default
+        )}
+      </button>
+  );
+};
 
 export default function ChatRoom({newChat, setNewChat}) {
 
@@ -13,7 +59,7 @@ export default function ChatRoom({newChat, setNewChat}) {
   const [input, setInput] = useState('');
   const [copyStatus, setCopyStatus] = useState(null); // For copy button feedback
   const messagesEndRef = useRef(null);
-
+  const [loading, setLoading] = useState(false);
   const chatHistory = useSelector((state) => state.chat.chatHistory);
 
 
@@ -144,7 +190,7 @@ const jsonData = JSON.stringify(data);
 
 const headers = new Headers();
 headers.append('Content-Type', 'application/json');
-
+setLoading(true);
 fetch(url, {
   method: 'POST', 
   headers: headers,
@@ -164,6 +210,8 @@ fetch(url, {
 })
 .catch(error => {
   console.error('Error:', error);
+}).finally(() => {
+  setLoading(false);
 });
 
 
@@ -188,6 +236,40 @@ fetch(url, {
 
 
 
+    const url = 'https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/chat';
+    const data = {
+      "uid": uid,
+      "chatbot": [["Hi", "How are you?"]],
+      "message": input
+    }
+
+    const jsonData = JSON.stringify(data);
+
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+    setLoading(true);
+    fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: jsonData
+    })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+
+          }
+          return response.json();
+        })
+        .then(responseData => {
+          const { botText, botSQL } = extractData(responseData?.chatbot[1]?.[1]);
+
+          console.log('Todo created successfully:', responseData);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        }).finally(() => {
+      setLoading(false);
+    });
     // const { botText, botSQL } = generateBotResponse(question);
 
     // setMessages([...messages, { text: question, sender: 'user' }]);
@@ -199,6 +281,16 @@ fetch(url, {
     //   { text: botText, sender: 'bot' },
     //   { text: botSQL, sender: 'bot', sql: true },
     // ]);
+  };
+  const handleBookmark = (question, answer) => {
+    if (question && answer) {
+      console.log("Bookmarked Question:", question);
+      console.log("Bookmarked Answer:", answer);
+      // Call your function to save the bookmark
+      // saveBookmark({ question, answer });
+    } else {
+      console.error("Failed to bookmark: Missing question or answer.");
+    }
   };
 
   const handleCopyToClipboard = (sql) => {
@@ -270,12 +362,21 @@ fetch(url, {
                     >
                       {msg.sender === 'bot' && <FaRobot className="text-purple-500 mr-3 mt-1" />}
                       <div
-                          className={`w-full max-w-4xl rounded-lg p-4 ${
+                          className={`w-full relative max-w-4xl rounded-lg p-4 ${
                               msg.sender === 'user'
                                   ? 'bg-purple-500 text-white shadow-lg'
                                   : 'bg-gray-100 text-gray-800 shadow-md'
                           }`}
                       >
+                        {/* Bookmark Icon */}
+                        {msg.sender === "bot" && !msg.sql &&(
+                            <BookmarkButton
+                                question={messages[index - 1]?.text} // Assume previous message is the question
+                                answer={msg.text} // Current bot message is the answer
+                            />
+
+                        )}
+
                         {msg.sql ? (
                             <div className="relative">
                               <SyntaxHighlighter
@@ -302,6 +403,21 @@ fetch(url, {
                       </div>
                     </div>
                 ))}
+
+
+
+                {loading &&
+                    <div
+                        className={`flex 'justify-start'} items-start`}
+                    >
+                      {<FaRobot className="text-purple-500 mr-3 mt-1" />}
+
+                      <div className="typing-indicator">
+                        <span className="dot"></span>
+                        <span className="dot"></span>
+                        <span className="dot"></span>
+                      </div></div>
+                }
 
                 <div ref={messagesEndRef}  className="space-y-4 flex-grow overflow-y-scroll scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-purple-100" />
 

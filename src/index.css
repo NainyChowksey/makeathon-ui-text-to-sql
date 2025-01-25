@@ -38,3 +38,36 @@
     scrollbar-width: thin; /* Thin scrollbar for better appearance */
     scroll-behavior: smooth; /* Smooth scrolling experience */
 }
+
+.typing-indicator {
+    display: inline-flex; /* Ensures dots are inline */
+    align-items: center;
+    justify-content: center;
+    gap: 4px; /* Adds spacing between dots */
+    height: 20px; /* Fixed height for visual alignment */
+}
+
+.typing-indicator .dot {
+    width: 8px; /* Adjust size as needed */
+    height: 8px;
+    background-color: gray; /* Dot color */
+    border-radius: 50%;
+    animation: bounce 1.2s infinite ease-in-out;
+}
+
+.typing-indicator .dot:nth-child(2) {
+    animation-delay: 0.2s; /* Add slight delay for second dot */
+}
+
+.typing-indicator .dot:nth-child(3) {
+    animation-delay: 0.4s; /* Add slight delay for third dot */
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0); /* Start/End: Dot shrinks */
+    }
+    40% {
+        transform: scale(1); /* Mid-point: Dot grows */
+    }
+}
