@@ -118,7 +118,7 @@ const Login = () => {
         const userData = {
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName || "Anonymous User",
+          displayName: user.displayName || "User",
           photoURL: user.photoURL || USER_AVATAR,
           accesspermissions: role
         };
@@ -181,17 +181,17 @@ const Login = () => {
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
     
               <>
-                <div>
+                {!isSignIn && <div>
                   <label className="block text-sm text-gray-700 mb-1">
                     Full Name
                   </label>
                   <input
-                    ref={name}
-                    type="text"
-                    placeholder="John Doe"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 text-gray-800"
+                      ref={name}
+                      type="text"
+                      placeholder="John Doe"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-600 text-gray-800"
                   />
-                </div>
+                </div>}
                 {/* <div>
                   <label className="block text-sm text-gray-700 mb-1">
                     Key (Optional)
