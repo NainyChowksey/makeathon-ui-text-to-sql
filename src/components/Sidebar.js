@@ -145,7 +145,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
                             alt="Profile"
                             className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-purple-500"
                         />
-                        <h2 className="text-lg font-semibold text-white">{user.displayName || "Anonymous User"}</h2>
+                        <h2 className="text-lg font-semibold text-white">{user.displayName || "User"}</h2>
                         <p className="text-sm text-purple-300">{user.email || "Email not available"}</p>
                         <p className="text-sm text-gray-400 mt-1">Role: {role?.toUpperCase()}</p>
                     </div>
