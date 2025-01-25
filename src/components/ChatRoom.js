@@ -16,6 +16,7 @@ export default function ChatRoom({newChat, setNewChat}) {
 
   const chatHistory = useSelector((state) => state.chat.chatHistory);
 
+
   const currentActiveChatId = useSelector((state) => state.chat.currentActiveChatId);
 
   // Find messages for the currently active chat
@@ -23,7 +24,8 @@ export default function ChatRoom({newChat, setNewChat}) {
   const messages = activeChat?.messages || [];
 
 
-  const { displayName } = useSelector((state) => state.user);
+  const { displayName, uid } = useSelector((state) => state.user);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -100,6 +102,19 @@ export default function ChatRoom({newChat, setNewChat}) {
     }
   };
 
+  const extractData = async(response) => {
+    const botTextMatch = response.match(/botText:\s(.*)\s*botSQL:/s);
+    const botSQLMatch = response.match(/botSQL:\s(.*)/);
+  
+    const botText = botTextMatch ? botTextMatch[1].trim() : null;
+    const botSQL = botSQLMatch ? botSQLMatch[1].trim() : null;
+  
+    await addMessageWithDelay([
+      { text: botText, sender: 'bot' },
+      { text: botSQL, sender: 'bot', sql: true },
+    ]);
+  };
+
   const handleSubmit = async () => {
     if (input.trim()) {
 
@@ -111,13 +126,49 @@ export default function ChatRoom({newChat, setNewChat}) {
 
       dispatch(updateChatHistory( { text: input, sender: 'user' }))
 
-      const { botText, botSQL } = generateBotResponse(input);
+      
+const url = 'https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/chat';
+const data = {
+  "uid": uid,
+  "chatbot": [["Hi", "How are you?"]],
+  "message": input
+}
 
+const jsonData = JSON.stringify(data);
+
+const headers = new Headers();
+headers.append('Content-Type', 'application/json');
+
+fetch(url, {
+  method: 'POST', 
+  headers: headers,
+  body: jsonData
+})
+.then(response => {
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+    
+  }
+  return response.json();
+})
+.then(responseData => {
+  const { botText, botSQL } = extractData(responseData?.chatbot[1]?.[1]);
+
+  console.log('Todo created successfully:', responseData);  
+})
+.catch(error => {
+  console.error('Error:', error);
+});
+
+
+
+
+//const { botText, botSQL } = generateBotResponse(input);
       // Add bot responses with a delay for streaming
-      await addMessageWithDelay([
-        { text: botText, sender: 'bot' },
-        { text: botSQL, sender: 'bot', sql: true },
-      ]);
+      // await addMessageWithDelay([
+      //   { text: botText, sender: 'bot' },
+      //   { text: botSQL, sender: 'bot', sql: true },
+      // ]);
 
       setInput('');
     }
@@ -130,13 +181,18 @@ export default function ChatRoom({newChat, setNewChat}) {
     dispatch(setCurrentActiveChatId(newChat.id));
 
 
-    const { botText, botSQL } = generateBotResponse(question);
+
+    // const { botText, botSQL } = generateBotResponse(question);
+
+    // setMessages([...messages, { text: question, sender: 'user' }]);
+
+   // const { botText, botSQL } = generateBotResponse(question);
 
     // Add bot responses with a delay for streaming
-    await addMessageWithDelay([
-      { text: botText, sender: 'bot' },
-      { text: botSQL, sender: 'bot', sql: true },
-    ]);
+    // await addMessageWithDelay([
+    //   { text: botText, sender: 'bot' },
+    //   { text: botSQL, sender: 'bot', sql: true },
+    // ]);
   };
 
   const handleCopyToClipboard = (sql) => {
