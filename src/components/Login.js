@@ -59,6 +59,18 @@ const Login = () => {
             email.current.value,
             password.current.value
           ).then((userCredential) => {
+            const user = userCredential.user;
+            const userData = {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName || "User",
+              photoURL: user.photoURL || USER_AVATAR,
+              accesspermissions: role
+            };
+    
+            dispatch(addUser(userData));
+            localStorage.setItem("authUser", JSON.stringify(userData));
+            navigate("/browse");
             return updateProfile(userCredential.user, {
               displayName: name.current.value,
               photoURL: USER_AVATAR,
@@ -75,7 +87,7 @@ const Login = () => {
       .then((userCredential) => {
        
         const user = userCredential.user;
-        console.log(user)
+        console.log(user, "user")
         const url =
           "https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/fetchrole";
         // "http://localhost:8000/metadata"

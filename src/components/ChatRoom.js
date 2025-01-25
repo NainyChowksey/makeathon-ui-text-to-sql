@@ -114,12 +114,22 @@ export default function ChatRoom({newChat, setNewChat}) {
     console.log(botText, botSQL, "NAINY")
 
     const isSql = !botSQL?.includes("N/A")
-  
+  if(!isSql){
+    await addMessageWithDelay([
+      { text: botText, sender: 'bot' }
+    ]);
+
+  }
+  else{
     await addMessageWithDelay([
       { text: botText, sender: 'bot' },
-        ...isSql && ({ text: botSQL, sender: 'bot', sql: isSql }),
+      { text: botSQL, sender: 'bot', sql: isSql },
+    
     ]);
+
+  }
   };
+  
 
   const handleSubmit = async () => {
     if (input.trim()) {
