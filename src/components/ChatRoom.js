@@ -103,15 +103,21 @@ export default function ChatRoom({newChat, setNewChat}) {
   };
 
   const extractData = async(response) => {
+  
     const botTextMatch = response.match(/botText:\s(.*)\s*botSQL:/s);
     const botSQLMatch = response.match(/botSQL:\s(.*)/);
   
+   
     const botText = botTextMatch ? botTextMatch[1].trim() : null;
     const botSQL = botSQLMatch ? botSQLMatch[1].trim() : null;
+
+    console.log(botText, botSQL, "NAINY")
+
+    const isSql = !botSQL?.includes("N/A")
   
     await addMessageWithDelay([
       { text: botText, sender: 'bot' },
-      { text: botSQL, sender: 'bot', sql: true },
+      { text: botSQL, sender: 'bot', sql: isSql },
     ]);
   };
 
