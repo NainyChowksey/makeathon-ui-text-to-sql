@@ -76,8 +76,8 @@ const Login = () => {
         const user = userCredential.user;
         console.log(user)
         const url =
-          // "https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/fetchrole";
-        "http://localhost:8000/metadata"
+          "https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/fetchrole";
+        // "http://localhost:8000/metadata"
         const data = {
           uid: user.uid,
           email: user.email
