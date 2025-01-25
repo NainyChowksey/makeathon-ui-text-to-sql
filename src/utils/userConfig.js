@@ -11,7 +11,7 @@ const userConfigSlice = createSlice({
 
         },
         removeRole:(state, action)=>{
-            state.roll=null
+            state.role=null
 
         }
     }

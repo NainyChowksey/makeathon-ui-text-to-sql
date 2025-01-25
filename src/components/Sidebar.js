@@ -33,6 +33,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
 
     const user = useSelector((state) => state.user);
     const {currentActiveChatId, chatHistory} = useSelector((state) => state.chat);
+    const role = useSelector(state => state.userConfig.role)
+
     const location = useLocation();
 
 
@@ -143,7 +145,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, setNewChat }) => {
                         />
                         <h2 className="text-lg font-semibold text-white">{user.displayName || "Anonymous User"}</h2>
                         <p className="text-sm text-purple-300">{user.email || "Email not available"}</p>
-                        <p className="text-sm text-gray-400 mt-1">Role: Standard User</p>
+                        <p className="text-sm text-gray-400 mt-1">Role: {role?.toUpperCase()}</p>
                     </div>
                 )}
 

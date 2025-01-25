@@ -10,16 +10,16 @@ import {
 import { auth } from '../utils/firebase';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUser } from '../utils/userSlice';
-import { checkValidData } from '../utils/validations';
+import {checkValidData, convertResponses} from '../utils/validations';
 import { USER_AVATAR } from '../utils/constants';
 import { useNavigate } from 'react-router-dom';
 import { addRole } from '../utils/userConfig';
+import {setChatHistory} from "../utils/chatSlice";
 
 const Login = () => {
   const [isSignIn, setIsSignIn] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [role, setRole]=useState(null)
   const email = useRef();
   const name = useRef();
   const password = useRef();
@@ -27,6 +27,8 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userState = useSelector((store)=>store.userSlice?.user)
+
+  const role = useSelector(state => state.userConfig.role)
 
   const carouselMessages = [
     '"Convert your queries effortlessly!"',
@@ -75,6 +77,7 @@ const Login = () => {
         console.log(user)
         const url =
           "https://5b38-2409-40f2-200b-6a6f-f5c2-dc87-cb25-3aea.ngrok-free.app/fetchrole";
+        // "http://localhost:8000/metadata"
         const data = {
           uid: user.uid,
           email: user.email
@@ -98,8 +101,9 @@ const Login = () => {
           })
           .then((responseData) => {
                console.log("Nainy", responseData);
-               setRole(responseData?.role)
-               dispatch(addRole(role))
+               dispatch(addRole(responseData?.role))
+
+              dispatch(setChatHistory(convertResponses(responseData?.prev_question_response?.question_answer_pairs)))
 
           })
           .catch((error) => {
@@ -114,7 +118,7 @@ const Login = () => {
         const userData = {
           uid: user.uid,
           email: user.email,
-          displayName: name.current.value || "Anonymous User",
+          displayName: user.displayName || "Anonymous User",
           photoURL: user.photoURL || USER_AVATAR,
           accesspermissions: role
         };

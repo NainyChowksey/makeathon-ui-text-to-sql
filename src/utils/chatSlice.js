@@ -103,7 +103,7 @@ const chatSlice = createSlice({
             state.chatHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         },
 
-        // Set the chat to be active based on chat object
+       // Set the chat to be active based on chat object
         setCurrentChat: (state, action) => {
             state.currentChat = action.payload;
         },
@@ -121,9 +121,13 @@ const chatSlice = createSlice({
         setCurrentActiveChatId: (state, action) => {
             state.currentActiveChatId = action.payload;
         },
+
+        setChatHistory: (state, action) => {
+            state.chatHistory = action.payload;
+        }
     },
 });
 
-export const { updateChatHistory, addToChatHistory, setCurrentChat, setCurrentActiveChatId } = chatSlice.actions;
+export const {setChatHistory, updateChatHistory, addToChatHistory, setCurrentChat, setCurrentActiveChatId } = chatSlice.actions;
 
 export default chatSlice.reducer;
